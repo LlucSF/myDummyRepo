@@ -1,0 +1,233 @@
+---
+title: "Taylor series: basics and visuals"
+author: "Lluc Sementé"
+date: "9/11/2018"
+output: pdf_document
+
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(scales)
+library(gridExtra)
+```
+
+## 1.Taylor series
+
+A one-dimensional **Taylor series**[1] is an expansion of a real function $f(x)$ about a point $x=a$ and it's given by:
+
+$$ f(x) = f(a)+\frac{f'(a)}{1!}(x-a)+\frac{f''(a)}{2!}(x-a)^2+\frac{f^{(3)}(a)}{3!}(x-a)^3+\dots = \sum_{n=0}^{\infty}\frac{f^{(n)}(a)}{n!}(x-a)^n $$
+This sereies expansion transforms information about the derivative terms of the function into local information around a point. As we keep adding terms in the series, the resulting polynomial will fit better and better the function in the convergence interval. If a = 0, the expansion is known as a **Maclaurin series**.
+
+Taylor series are useful to simplify complex functions around a point in order to ease the calculus in which are involved. This is a specially crucial step in some common physics problems. Probably, the most used Taylor series approximation is $cos(\theta) = 1 - \frac{\theta^2}{2}$, commonly used in pendulum oscillation related problems.
+
+Let's now end with boring formulas and enter the beautiful world of visualization.
+
+## 2.Maclaurin series of common functions
+
+Time to focus our attention into some well known functions and its Maclaurin series through intuitive colorful plots. Let's start with the trigonometric functions cosine and sine.
+
+### 2.1 Trigonometric related functions
+
+First, let's look at the functions alone. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,dpi=300,fig.align='center',fig.width=7,fig.height=3.5}
+x <- seq(from = -2*pi, to = 2*pi,length.out = 32768)
+y <- cos(x)
+cosine <- data.frame("x" = x, "y" = y)
+
+x <- seq(from = -2*pi, to = 2*pi,length.out = 32768)
+y <- sin(x)
+sine <- data.frame("x" = x, "y" = y)
+pi_scales <- math_format(.x * pi, format = function(x) x / pi)
+
+p1 <- ggplot(data = cosine, mapping = aes(x = x, y = y)) +  geom_hline(yintercept = c(-1,0,1),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_vline(xintercept = c(-2*pi,0,2*pi),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_line(colour="red") + xlim(c(-2*pi,2*pi)) + ylim(c(-2,2)) + theme_bw() + scale_x_continuous(labels = pi_scales, breaks = seq(from = -2*pi,  to = 2*pi, by = (pi/2)),expand = c(0,0)) + xlab("x") + ylab("y") + scale_y_continuous(breaks = c(-1,0,1),limits = c(-2,2)) + ggtitle("Cos(x)")
+
+p2 <- ggplot(data = sine, mapping = aes(x = x, y = y)) +  geom_hline(yintercept = c(-1,0,1),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_vline(xintercept = c(-2*pi,0,2*pi),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_line(colour="red") + xlim(c(-2*pi,2*pi)) + ylim(c(-2,2)) + theme_bw() + scale_x_continuous(labels = pi_scales, breaks = seq(from = -2*pi,  to = 2*pi, by = (pi/2)),expand = c(0,0)) + xlab("x") + ylab("y") + scale_y_continuous(breaks = c(-1,0,1),limits = c(-2,2)) + ggtitle("Sin(x)")
+
+grid.arrange(p1,p2,nrow = 1)
+```
+
+Applying the definition of Taylor series, the cosine's and sine's Taylor series around $x=0$ (Maclaurin series) looks like this:
+$$ cos(x) = 1-\frac{x^2}{2!}+\frac{x^4}{4!}-\frac{x^6}{6!}+\dots = \sum_{n=0}^{\infty}(-1)^{n}\frac{x^{2n}}{2n!} $$
+$$sin(x) = {x}-\frac{x^3}{3!}+\frac{x^5}{5!}-\frac{x^7}{7!}+\dots = \sum_{n=0}^{\infty}(-1)^{n}\frac{x^{2n+1}}{(2n+1)!}$$
+
+
+Using this formulas, let's see how good is this tool to approximate the behavior of $cos(x)$ and $sin(x)$ around $x=0$.
+```{r, echo=FALSE, message=FALSE, warning=FALSE,dpi=300,fig.align='center',fig.width=9.92,fig.height=3.5}
+x <- seq(from = -2*pi, to = 2*pi,length.out = 32768)
+y <- c((1-((x^2)/2)),
+       (1-((x^2)/2)+((x^4)/factorial(4))),
+       (1-((x^2)/2)+((x^4)/factorial(4))-((x^6)/factorial(6))),
+       (1-((x^2)/2)+((x^4)/factorial(4))-((x^6)/factorial(6))+((x^8)/factorial(8))),
+       cos(x)
+       )
+colour <- as.factor(c(rep("2nd degree",times=32768), rep("4th degree",times=32768), rep("6th degree",times=32768), rep("8th degree",times=32768),rep("cos(x)",times=32768)))
+
+linetype <- as.factor(c(rep(2, times = (4*32768)),rep(1, times = 32768)))
+df <- data.frame("x" = x, "y" = y, "colour" = colour, "linetype" = linetype)
+pi_scales <- math_format(.x * pi, format = function(x) x / pi)
+
+p1 <- ggplot(data = df, mapping = aes(x = x, y = y)) +  
+geom_hline(yintercept = c(-1,0,1),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_vline(xintercept = c(-2*pi,0,2*pi),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_line(mapping = aes(linetype = linetype, colour = colour)) + 
+xlim(c(-2*pi,2*pi)) + ylim(c(-2,2)) + 
+theme_bw() + 
+scale_x_continuous(labels = pi_scales, breaks = seq(from = -2*pi,  to = 2*pi, by = (pi/2)),expand = c(0,0)) + 
+xlab("x") + ylab("y") + 
+scale_y_continuous(breaks = c(-1,0,1),limits = c(-2,2)) +
+scale_linetype_manual(values = c("solid", "dashed"), guide = FALSE) + ggtitle("Cosine's Maclaurin series") + labs("Function") +
+scale_color_manual(values = c("cos(x)" = "red","2nd degree" = "#F8766D", "4th degree" = "#00BA38", "6th degree" = "#00B0F6", "8th degree" ="#FD61D1" ) )
+
+x <- seq(from = -2*pi, to = 2*pi,length.out = 32768)
+y <- c(sin(x),
+       (x),
+       (x)-((x^3)/factorial(3)),
+       (x)-((x^3)/factorial(3))+((x^5)/factorial(5)),
+       ((x)-((x^3)/factorial(3))+((x^5)/factorial(5))-((x^7)/factorial(7)))
+       )
+colour <- as.factor(c(rep("sin(x)",times=32768), rep("1st degree",times=32768), rep("3rd degree",times=32768), rep("5th degree",times=32768), rep("7th degree",times=32768)))
+
+linetype <- as.factor(c(rep(1, times = 32768), rep(2, times = (4*32768))))
+df <- data.frame("x" = x, "y" = y, "colour" = colour, "linetype" = linetype)
+pi_scales <- math_format(.x * pi, format = function(x) x / pi)
+
+p2 <- ggplot(data = df, mapping = aes(x = x, y = y)) +  
+geom_hline(yintercept = c(-1,0,1),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_vline(xintercept = c(-2*pi,0,2*pi),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_line(mapping = aes(linetype = linetype, colour = colour)) + 
+xlim(c(-2*pi,2*pi)) + ylim(c(-2,2)) + 
+theme_bw() + 
+scale_x_continuous(labels = pi_scales, breaks = seq(from = -2*pi,  to = 2*pi, by = (pi/2)),expand = c(0,0)) + 
+xlab("x") + ylab("y") + 
+scale_y_continuous(breaks = c(-1,0,1),limits = c(-2,2)) +
+scale_size_manual(values = c(1, 0.8), guide = FALSE) +
+scale_linetype_manual(values = c("solid", "longdash"), guide = FALSE) + 
+ggtitle("Sine's Maclaurin series") + labs("Function") +
+scale_color_manual(values = c("sin(x)" = "red","1st degree" = "#F8766D", "3rd degree" = "#00BA38", "5th degree" = "#00B0F6", "7th degree"="#FD61D1" ) )
+        
+
+grid.arrange(p1,p2,nrow = 1)
+```
+
+That looks smooth! Notice that, as we keep adding polynomial terms, the approximation is getting better and better around $x=0$.
+Also, cosine is an even function ($i.e. cos(-x) = cos(x)$) and his Maclaurin series has only even powers, and sine is an odd function ($i.e. sin(-x) = -sin(x)$) and his Maclaurin series has only odd powers. What kind of black magic is this?
+Also it's beautiful to see the patterns that are formed over-plotting each consecutive polynomial and how the inner symmetry of each function is visualized.
+
+Time for the cardinal version of the sine function, a very important function in signal processing. Trying to obtain the derivatives of the cardinal sine can be overwelming, so instead, let's use the sine's Maclaurin serie:
+
+$$ sinc(x) = \frac{sin(x)}{x} = \frac{\sum_{n=0}^{\infty}(-1)^{n}\frac{x^{2n+1}}{(2n+1)!}}{x} = \sum_{n=0}^{\infty}(-1)^{n}\frac{x^{2n}}{(2n+1)!}$$
+```{r, echo=FALSE, message=FALSE, warning=FALSE,dpi=300,fig.align='center',fig.width=9.92,fig.height=3.5}
+
+x <- seq(from = -4*pi, to = 4*pi,length.out = 3*32768)
+y <- c(sin(x)/x)
+df <- data.frame("x" = x, "y" = y)
+
+pi_scales <- math_format(.x * pi, format = function(x) x / pi)
+
+p1 <- ggplot(data = df, mapping = aes(x = x, y = y)) +  geom_hline(yintercept = c(-1,0,1),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_vline(xintercept = c(-4*pi,0,4*pi),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_line(colour="red") + xlim(c(-4*pi,4*pi)) + ylim(c(-0.5,1.5)) + theme_bw() + scale_x_continuous(labels = pi_scales, breaks = seq(from = -4*pi,  to = 4*pi, by = (pi)),expand = c(0,0)) + xlab("x") + ylab("y") + scale_y_continuous(breaks = c(0,1),limits = c(-0.5,1.5)) + ggtitle("Sinc(x)")
+
+
+x <- seq(from = -4*pi, to = 4*pi,length.out = 3*32768)
+y <- c(sin(x)/x,
+       ((1)-(x^2)/factorial(3)),
+       ((1)-((x^2)/factorial(3))+((x^4)/factorial(5))),
+       ((1)-((x^2)/factorial(3))+((x^4)/factorial(5))-((x^6)/factorial(7))),
+       ((1)-((x^2)/factorial(3))+((x^4)/factorial(5))-((x^6)/factorial(7))+((x^8)/factorial(9)))
+       )
+colour <- as.factor(c(rep("sinc(x)",times=3*32768), rep("2nd degree",times=3*32768), rep("4th degree",times=3*32768), rep("6th degree",times=3*32768), rep("8th degree",times=3*32768)))
+
+linetype <- as.factor(c(rep(1, times = 3*32768), rep(2, times = (4*3*32768))))
+df <- data.frame("x" = x, "y" = y, "colour" = colour, "linetype" = linetype)
+pi_scales <- math_format(.x * pi, format = function(x) x / pi)
+
+p2 <- ggplot(data = df, mapping = aes(x = x, y = y)) +  
+geom_hline(yintercept = c(-1,0,1),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_vline(xintercept = c(-4*pi,0,4*pi),linetype = c("dashed","longdash","dashed"),colour = c("grey","black","grey")) + geom_line(mapping = aes(linetype = linetype, colour = colour)) + 
+xlim(c(-4*pi,4*pi)) + ylim(c(-2,2)) + 
+theme_bw() + 
+scale_x_continuous(labels = pi_scales, breaks = seq(from = -4*pi,  to = 4*pi, by = (pi)),expand = c(0,0)) + 
+xlab("x") + ylab("y") + 
+scale_y_continuous(breaks = c(0,1),limits = c(-0.5,1.5)) +
+scale_size_manual(values = c(1, 0.8), guide = FALSE) +
+scale_linetype_manual(values = c("solid", "longdash"), guide = FALSE) + 
+ggtitle("Cardinal sine's Maclaurin series") + labs("Function") +
+scale_color_manual(values = c("sinc(x)" = "red","2nd degree" = "#F8766D", "4th degree" = "#00BA38", "6th degree" = "#00B0F6", "8th degree"="#FD61D1" ) )
+
+grid.arrange(p1,p2,nrow = 1)
+```
+
+### 2.1 Exponential related functions
+
+Time for some exponential related functions like the natural exponential and the Gaussian function:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,dpi=300,fig.align='center',fig.width=7,fig.height=3.5}
+x <- seq(from = -5, to = 5,length.out = 32768)
+y <- exp(x)
+p.exponential <- data.frame("x" = x, "y" = y)
+
+p1 <- ggplot(data = p.exponential, mapping = aes(x = x, y = y)) +
+geom_line(colour="red") + 
+xlim(c(-5,5)) + 
+ylim(c(-1,9)) + 
+theme_bw() + 
+scale_x_continuous(breaks = seq(from = -5, to = 5, by = 1),expand = c(0,0)) + 
+xlab("x") + 
+ylab("y") + 
+scale_y_continuous(breaks = seq(from = -1, to = 9, by = 1),limits = c(-1,9),expand = c(0,0)) +
+ggtitle("Positive natural exponential")
+
+
+x <- seq(from = -5, to = 5,length.out = 32768)
+y <- exp(-(x^2))
+n.exponential <- data.frame("x" = x, "y" = y)
+
+p2 <- ggplot(data = n.exponential, mapping = aes(x = x, y = y)) +
+geom_line(colour="red") + 
+theme_bw() + 
+scale_x_continuous(breaks = seq(from = -3, to = 3, by = 1),limits = c(-3,3),expand = c(0,0)) + 
+xlab("x") + 
+ylab("y") + 
+scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.25),limits = c(-0.25,1.25),expand = c(0,0)) +
+ggtitle("Gaussian function")
+
+
+grid.arrange(p1,p2,nrow = 1)
+```
+In this case, the Taylor's serie at $x=e$ is going to be displayed for the positive natural exponential, and the Maclaurin for the Gaussian function. But first, the formulas:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,dpi=300,fig.align='center',fig.width=7,fig.height=3.5}
+x <- rep(seq(from = -5, to = 5,length.out = 32768), times = 2)
+y <- exp(x)
+p.exponential <- data.frame("x" = x, "y" = y)
+
+p1 <- ggplot(data = p.exponential, mapping = aes(x = x, y = y)) +
+geom_line(colour="red") + 
+xlim(c(-5,5)) + 
+ylim(c(-1,9)) + 
+theme_bw() + 
+scale_x_continuous(breaks = seq(from = -5, to = 5, by = 1),expand = c(0,0)) + 
+xlab("x") + 
+ylab("y") + 
+scale_y_continuous(breaks = seq(from = -1, to = 9, by = 1),limits = c(-1,9),expand = c(0,0)) +
+ggtitle("Positive natural exponential")
+
+
+x <- seq(from = -5, to = 5,length.out = 32768)
+y <- exp(-(x^2))
+n.exponential <- data.frame("x" = x, "y" = y)
+
+p2 <- ggplot(data = n.exponential, mapping = aes(x = x, y = y)) +
+geom_line(colour="red") + 
+theme_bw() + 
+scale_x_continuous(breaks = seq(from = -3, to = 3, by = 1),limits = c(-3,3),expand = c(0,0)) + 
+xlab("x") + 
+ylab("y") + 
+scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.25),limits = c(-0.25,1.25),expand = c(0,0)) +
+ggtitle("Gaussian function")
+
+
+grid.arrange(p1,p2,nrow = 1)
+```
+
+
+## References
+
+[1] Weisstein, Eric W. "Taylor Series." From MathWorld--A Wolfram Web Resource. http://mathworld.wolfram.com/TaylorSeries.html
